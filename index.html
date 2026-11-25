@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0, user-scalable=yes">
+<title>Назови слоги и раскрась дерево по образцу — Ф</title>
+<style>
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body {
+    height: 100%;
+    min-height: 100dvh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #eef6fb;
+    color: #1e293b;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    padding: 6px;
+    gap: 6px;
+  }
+  .top-panel {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 7px 10px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    flex-shrink: 0;
+  }
+  .header-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 10px;
+    margin-bottom: 5px;
+  }
+  h1 {
+    font-size: clamp(15px, 3.8vw, 20px);
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.15;
+  }
+  .author-top {
+    font-size: clamp(11px, 2.6vw, 13px);
+    color: #475569;
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+  }
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex: 1;
+  }
+  .swatch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    background: #ffffff;
+    cursor: pointer;
+    font-size: clamp(14px, 3.6vw, 18px);
+    font-weight: 800;
+    transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
+  }
+  .swatch-btn.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.18);
+    transform: scale(1.04);
+    background: #f8fafc;
+  }
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    border: 1.5px solid rgba(0,0,0,0.2);
+  }
+  .c-blue { color: #1d4ed8; }
+  .c-green { color: #15803d; }
+  .c-red { color: #dc2626; }
+  .status-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .counter {
+    font-size: clamp(12px, 3vw, 14px);
+    font-weight: 700;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .reset-btn {
+    font-size: clamp(12px, 3vw, 14px);
+    font-weight: 700;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .reset-btn:active {
+    transform: scale(0.97);
+  }
+  .board-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    overflow: hidden;
+  }
+  svg#tree-svg {
+    width: 100%;
+    height: 100%;
+    max-width: 1280px;
+    display: block;
+  }
+  .node-group {
+    cursor: pointer;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+  .shake {
+    animation: shake 0.3s ease-in-out;
+  }
+  .footer-author {
+    text-align: center;
+    font-size: clamp(11px, 2.5vw, 13px);
+    color: #64748b;
+    font-weight: 600;
+    flex-shrink: 0;
+    padding-bottom: 2px;
+  }
+  .win-banner {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+  }
+  .win-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+  .win-card h2 {
+    font-size: 24px;
+    color: #15803d;
+    margin-bottom: 8px;
+  }
+  .win-card p {
+    font-size: 16px;
+    color: #334155;
+    margin-bottom: 16px;
+  }
+  .win-card button {
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="top-panel">
+  <div class="header-line">
+    <h1>Назови слоги и раскрась дерево по образцу</h1>
+    <div class="author-top">Автор игры: Краинская Ирина Александровна, педагог дополнительного образования</div>
+  </div>
+  <div class="controls-row">
+    <div class="palette" id="palette"></div>
+    <div class="status-actions">
+      <div class="counter" id="counter">0 из 21</div>
+      <button class="reset-btn" id="resetBtn">Заново</button>
+    </div>
+  </div>
+</div>
+
+<div class="board-wrap">
+  <svg id="tree-svg" viewBox="60 15 680 860" preserveAspectRatio="xMidYMid meet">
+    <!-- Трава у основания -->
+    <ellipse cx="400" cy="838" rx="285" ry="26" fill="#bbf7d0"/>
+    
+    <!-- Крона дерева (вытянутая и широкая под экран) -->
+    <path d="M 225,585
+             C 120,585 75,515 110,435
+             C 65,375 85,280 155,245
+             C 145,165 215,105 295,125
+             C 330,45 470,45 505,125
+             C 585,105 655,165 645,245
+             C 715,280 735,375 690,435
+             C 725,515 680,585 575,585
+             Z"
+          fill="#dcfce7" stroke="#22c55e" stroke-width="7" stroke-linejoin="round"/>
+
+    <!-- Ствол и ветви -->
+    <path d="M 332,835
+             C 344,720 348,625 344,545
+             L 230,430 L 254,408 L 355,505
+             L 365,365 L 402,365 L 405,495
+             L 525,390 L 548,414 L 424,538
+             C 424,625 432,720 468,835 Z"
+          fill="#e7d3b8" stroke="#78350f" stroke-width="6" stroke-linejoin="round"/>
+
+    <!-- Текстура коры -->
+    <line x1="378" y1="620" x2="378" y2="675" stroke="#92400e" stroke-width="4" stroke-linecap="round"/>
+    <line x1="406" y1="690" x2="406" y2="755" stroke="#92400e" stroke-width="4" stroke-linecap="round"/>
+    <line x1="368" y1="765" x2="368" y2="810" stroke="#92400e" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Пучки травы у корней -->
+    <polyline points="275,835 288,805 301,835 314,808 327,835" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="473,835 486,805 499,835 512,808 525,835" fill="none" stroke="#16a34a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Слой для кружков со слогами -->
+    <g id="nodes-layer"></g>
+  </svg>
+</div>
+
+<div class="footer-author">Автор интерактивной игры: Краинская Ирина Александровна, педагог дополнительного образования</div>
+
+<div class="win-banner" id="winBanner">
+  <div class="win-card">
+    <h2>Молодец!</h2>
+    <p>Все слоги прочитаны и правильно раскрашены!</p>
+    <button id="playAgainBtn">Сыграть ещё раз</button>
+  </div>
+</div>
+
+<script>
+  const SYLLABLES = [
+    { id: 'ФА', c: 'Ф', v: 'А', cClass: 'c-blue',  cHex: '#1d4ed8', color: '#ef4444' },
+    { id: 'ФО', c: 'Ф', v: 'О', cClass: 'c-blue',  cHex: '#1d4ed8', color: '#3b82f6' },
+    { id: 'ФУ', c: 'Ф', v: 'У', cClass: 'c-blue',  cHex: '#1d4ed8', color: '#22c55e' },
+    { id: 'ФЫ', c: 'Ф', v: 'Ы', cClass: 'c-blue',  cHex: '#1d4ed8', color: '#eab308' },
+    { id: 'ФИ', c: 'Ф', v: 'И', cClass: 'c-green', cHex: '#15803d', color: '#f97316' }
+  ];
+
+  const NODES = [
+    { x: 400, y: 120, syl: 'ФО' },
+    { x: 275, y: 175, syl: 'ФА' },
+    { x: 525, y: 175, syl: 'ФИ' },
+    { x: 185, y: 265, syl: 'ФЫ' },
+    { x: 345, y: 260, syl: 'ФУ' },
+    { x: 465, y: 260, syl: 'ФА' },
+    { x: 615, y: 265, syl: 'ФО' },
+    { x: 145, y: 375, syl: 'ФИ' },
+    { x: 260, y: 355, syl: 'ФУ' },
+    { x: 400, y: 345, syl: 'ФИ' },
+    { x: 540, y: 355, syl: 'ФЫ' },
+    { x: 655, y: 375, syl: 'ФА' },
+    { x: 175, y: 495, syl: 'ФО' },
+    { x: 290, y: 475, syl: 'ФА' },
+    { x: 510, y: 475, syl: 'ФУ' },
+    { x: 625, y: 495, syl: 'ФЫ' },
+    { x: 385, y: 555, syl: 'ФЫ' },
+    { x: 385, y: 655, syl: 'ФО' },
+    { x: 388, y: 755, syl: 'ФУ' },
+    { x: 215, y: 815, syl: 'ФИ' },
+    { x: 585, y: 815, syl: 'ФА' }
+  ];
+
+  let selectedSyl = SYLLABLES[0].id;
+  let solvedCount = 0;
+
+  const paletteEl = document.getElementById('palette');
+  const nodesLayer = document.getElementById('nodes-layer');
+  const counterEl = document.getElementById('counter');
+  const winBanner = document.getElementById('winBanner');
+
+  function renderPalette() {
+    paletteEl.innerHTML = '';
+    SYLLABLES.forEach(item => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'swatch-btn' + (selectedSyl === item.id ? ' active' : '');
+      btn.innerHTML = `
+        <span class="dot" style="background:${item.color}"></span>
+        <span><span class="${item.cClass}">${item.c}</span><span class="c-red">${item.v}</span></span>
+      `;
+      btn.onclick = () => {
+        selectedSyl = item.id;
+        renderPalette();
+      };
+      paletteEl.appendChild(btn);
+    });
+  }
+
+  function updateCounter() {
+    counterEl.textContent = `${solvedCount} из ${NODES.length}`;
+    if (solvedCount === NODES.length) {
+      setTimeout(() => {
+        winBanner.style.display = 'flex';
+      }, 250);
+    }
+  }
+
+  function renderNodes() {
+    nodesLayer.innerHTML = '';
+    solvedCount = 0;
+    updateCounter();
+
+    NODES.forEach(node => {
+      const info = SYLLABLES.find(s => s.id === node.syl);
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node-group');
+      g.dataset.solved = '0';
+
+      const outerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      outerCircle.setAttribute('cx', node.x);
+      outerCircle.setAttribute('cy', node.y);
+      outerCircle.setAttribute('r', '44');
+      outerCircle.setAttribute('fill', '#ffffff');
+      outerCircle.setAttribute('stroke', '#1e293b');
+      outerCircle.setAttribute('stroke-width', '3.5');
+
+      const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      innerCircle.setAttribute('cx', node.x);
+      innerCircle.setAttribute('cy', node.y);
+      innerCircle.setAttribute('r', '31');
+      innerCircle.setAttribute('fill', '#ffffff');
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', node.x);
+      text.setAttribute('y', node.y + 11);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('font-size', '31');
+      text.setAttribute('font-weight', '800');
+      text.setAttribute('font-family', 'Arial, sans-serif');
+
+      const tspanC = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      tspanC.setAttribute('fill', info.cHex);
+      tspanC.textContent = info.c;
+
+      const tspanV = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      tspanV.setAttribute('fill', '#dc2626');
+      tspanV.textContent = info.v;
+
+      text.appendChild(tspanC);
+      text.appendChild(tspanV);
+
+      g.appendChild(outerCircle);
+      g.appendChild(innerCircle);
+      g.appendChild(text);
+
+      g.addEventListener('click', () => {
+        if (g.dataset.solved === '1') return;
+        if (selectedSyl === node.syl) {
+          g.dataset.solved = '1';
+          outerCircle.setAttribute('fill', info.color);
+          outerCircle.setAttribute('stroke', '#0f172a');
+          innerCircle.setAttribute('fill', 'rgba(255, 255, 255, 0.92)');
+          solvedCount++;
+          updateCounter();
+        } else {
+          g.classList.remove('shake');
+          void g.offsetWidth;
+          g.classList.add('shake');
+        }
+      });
+
+      nodesLayer.appendChild(g);
+    });
+  }
+
+  document.getElementById('resetBtn').onclick = () => {
+    winBanner.style.display = 'none';
+    renderNodes();
+  };
+
+  document.getElementById('playAgainBtn').onclick = () => {
+    winBanner.style.display = 'none';
+    renderNodes();
+  };
+
+  renderPalette();
+  renderNodes();
+</script>
+</body>
+</html>
